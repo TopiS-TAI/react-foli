@@ -22,14 +22,14 @@ function App() {
   return (
     <>
       <Container>
-        <Grid container>
-          <Grid item xs={3}>
-            <TextField label="Pysäkki" size="small" onChange={(e) => setStop(e.target.value)} />
+        <Grid container >
+          <Grid item xs pr="1em">
+            <TextField fullWidth error={error !== null} label="Pysäkki" size="small" onChange={(e) => setStop(e.target.value)} />
           </Grid>
-          <Grid item xs={3}>
+          <Grid item>
             <Button variant="outlined" onClick={fetchStops}>Hae</Button>
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12}>
             {
               error?.name !== undefined ? (
                 <Typography variant="body1">{`${ error.name}: ${error.message}.`}</Typography>
