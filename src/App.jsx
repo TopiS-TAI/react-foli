@@ -1,25 +1,43 @@
-import { AppBar, Autocomplete, Button, Container, CssBaseline, Grid, TextField, Toolbar, Typography } from "@mui/material"
+import { AppBar, Autocomplete, Button, Container, CssBaseline, Grid, IconButton, TextField, Toolbar, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 import stops from "./assets/stops.json"
 import { StopsList } from "./StopsList";
+
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import GpsOffIcon from '@mui/icons-material/GpsOff';
 
 function App() {
   const [stop, setStop] = useState(null)
   const [fetchedStop, setFetchedStop] = useState(null)
   const [busesList, setBusesList] = useState([])
-  const [error, setError] = useState(null)
+  const [stopsError, setStopsError] = useState(null)
   const [stopNames, setStopNames] = useState([])
+  const [filteredStops, setFilteredStops] = useState([])
+  const [location, setLocation] = useState(null)
+  const [hasLoc, setHasLoc] = useState(false)
+  const [locError, setLocError] = useState(null)
+  const [locFilter, setLocFilter] = useState(false)
+  const latFrame = 0.002;
+  const lonFrame = 0.004
 
   useEffect(() => {
     const processedStops = Object.entries(stops).map((s) => {
-      return { label: `${s[0]} - ${s[1].stop_name}`, key: s[0] }
+      return { label: `${s[0]} - ${s[1].stop_name}`, key: s[0], stop_lat: s[1].stop_lat, stop_lon: s[1].stop_lon }
     })
     setStopNames(processedStops)
+    setFilteredStops(processedStops)
+    getLocation()
+    setInterval(getLocation, 30000)
   }, [])
 
   useEffect(() => {
     fetchStopData()
   }, [stop])
+
+  useEffect(() => {
+    filterStops()
+  }, [locFilter])
 
   async function fetchStopData() {
     if (stop) {
@@ -28,10 +46,46 @@ function App() {
         const newStops = await data.json();
         setBusesList(newStops.result)
         setFetchedStop(stop.label)
-        setError(null)
+        setStopsError(null)
       } catch (err) {
-        setError(err)
+        setStopsError(err)
         setFetchedStop(null)
+      }
+    }
+  }
+
+  function getLocation() {
+    // 60.445668, 22.273896
+    // 0.005 - 0.01
+    setLocation(null)
+    if (navigator.geolocation) {
+      setHasLoc(true)
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setLocError(null)
+        setLocation(pos.coords)
+      },
+      (err) => {
+        console.error('geoloc.error', err)
+        setLocError(err)
+      })
+    } else {
+      setHasLoc(false)
+      console.error('no geoloc avalliable')
+    }
+  }
+
+  function filterStops() {
+    if (location && locFilter) {
+      const filteredStops = stopNames.filter((s) => {
+        return (
+        (location.latitude - latFrame / 2) < s.stop_lat && s.stop_lat < (location.latitude + latFrame / 2) &&
+        (location.longitude - lonFrame / 2) < s.stop_lon && s.stop_lon < (location.longitude + lonFrame / 2)
+        )
+      })
+      setFilteredStops(filteredStops)
+    } else {
+      if (stopNames.length) {
+        setFilteredStops(stopNames)
       }
     }
   }
@@ -46,16 +100,26 @@ function App() {
               <Autocomplete
 
                 size="small"
-                options={stopNames}
+                options={filteredStops}
                 isOptionEqualToValue={(option, value) => option.label === value.label}
                 onChange={(e, v) => setStop(v ? v : null)}
                 renderInput={(params) => <TextField {...params} sx={{ '.MuiInputBase-root': { backgroundColor: "#FFF" } }} placeholder="Pysäkki" />}
               />
             </Grid>
+            <Grid item>
+              <Button
+                variant={locFilter ? 'outlined' : 'text'}
+                color="inherit"
+                sx={{ml: '1em', height: '100%'}}
+                onClick={() => setLocFilter(!locFilter && location)}
+              >
+                { !hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon />}
+              </Button>
+            </Grid>
               {
-                error?.name !== undefined ? (
+                stopsError?.name !== undefined ? (
                   <Grid item xs={12}>
-                    <Typography variant="body1">{`${error.name}: ${error.message}.`}</Typography>
+                    <Typography variant="body1">{`${stopsError.name}: ${stopsError.message}.`}</Typography>
                   </Grid>
                 ) : null
               }

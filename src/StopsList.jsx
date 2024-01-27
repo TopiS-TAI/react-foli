@@ -7,7 +7,7 @@ export function StopsList(props) {
     const delta = time - new Date()
     let showTime = ''
     if (delta < 30 * 60 * 1000) {
-      showTime = `${Math.floor(delta / 1000 / 60)} min`
+      showTime = `${stop.monitored ? '' : '~'}${Math.floor(delta / 1000 / 60)} min`
     } else {
       showTime = time.toLocaleTimeString().slice(0, -3)
     }
