@@ -1,0 +1,14 @@
+.MuiTableCell-root.schedule-cell {
+    padding: 0.8em 0;
+    font-size: 1em;
+}
+
+.MuiTableCell-root.schedule-cell:nth-child(2) {
+    padding-right: 0.5em;
+    padding-left: 0.5em;
+    text-wrap: nowrap;
+}
+
+.MuiTableCell-root.schedule-cell:nth-child(3) {
+    text-wrap: nowrap;
+}
