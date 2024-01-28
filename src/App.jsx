@@ -1,4 +1,4 @@
-import { AppBar, Autocomplete, Button, Container, CssBaseline, Grid, IconButton, TextField, Toolbar, Typography } from "@mui/material"
+import { Alert, AppBar, Autocomplete, Button, Container, CssBaseline, Grid, IconButton, Snackbar, TextField, Toolbar, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 import stops from "./assets/stops.json"
 import { StopsList } from "./StopsList";
@@ -18,6 +18,7 @@ function App() {
   const [hasLoc, setHasLoc] = useState(false)
   const [locError, setLocError] = useState(null)
   const [locFilter, setLocFilter] = useState(false)
+  const [snackOpen, setSnackOpen] = useState(false)
   const latFrame = 0.002;
   const lonFrame = 0.004
 
@@ -57,7 +58,6 @@ function App() {
   function getLocation() {
     // 60.445668, 22.273896
     // 0.005 - 0.01
-    setLocation(null)
     if (navigator.geolocation) {
       setHasLoc(true)
       navigator.geolocation.getCurrentPosition((pos) => {
@@ -66,11 +66,24 @@ function App() {
       },
       (err) => {
         console.error('geoloc.error', err)
-        setLocError(err)
+        setLocation(null)
+        if (err.code === 1) {
+          setHasLoc(false)
+        } else {
+          setLocError(err)
+        }
       })
     } else {
+      setLocation(null)
       setHasLoc(false)
       console.error('no geoloc avalliable')
+    }
+  }
+
+  function handleFilterClick() {
+    setLocFilter(!locFilter && location)
+    if (locError || !hasLoc) {
+      setSnackOpen(true)
     }
   }
 
@@ -90,6 +103,10 @@ function App() {
     }
   }
 
+  function handleCloseSnack() {
+    setSnackOpen(false)
+  }
+
   return (
     <>
       <CssBaseline />
@@ -98,12 +115,12 @@ function App() {
           <Grid container >
             <Grid item xs>
               <Autocomplete
-
                 size="small"
                 options={filteredStops}
                 isOptionEqualToValue={(option, value) => option.label === value.label}
                 onChange={(e, v) => setStop(v ? v : null)}
                 renderInput={(params) => <TextField {...params} sx={{ '.MuiInputBase-root': { backgroundColor: "#FFF" } }} placeholder="Pysäkki" />}
+                ListboxProps={{ style: { maxHeight: '85vh' } }}
               />
             </Grid>
             <Grid item>
@@ -111,7 +128,7 @@ function App() {
                 variant={locFilter ? 'outlined' : 'text'}
                 color="inherit"
                 sx={{ml: '1em', height: '100%'}}
-                onClick={() => setLocFilter(!locFilter && location)}
+                onClick={handleFilterClick}
               >
                 { !hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon />}
               </Button>
@@ -133,6 +150,16 @@ function App() {
       <Container>
         <StopsList busesList={busesList}></StopsList>
       </Container>
+      <Snackbar
+        open={snackOpen}
+        onClose={handleCloseSnack}
+        autoHideDuration={3000}
+      >
+        <Alert severity="error" variant="filled" sx={{width: "100%"}}>
+          {!hasLoc ? 'Sijaintipalvelut ei käytössä' : locError ? 'Sijantipalvelussa virhe' : 'Sijainti käytössä'}
+        </Alert>
+
+      </Snackbar>
     </>
   )
 }
