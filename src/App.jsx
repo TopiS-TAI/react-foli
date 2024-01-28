@@ -1,5 +1,5 @@
-import { Alert, AppBar, Autocomplete, Button, Container, CssBaseline, Grid, IconButton, Snackbar, TextField, Toolbar, Typography } from "@mui/material"
-import { useEffect, useState } from "react"
+import { Alert, AppBar, Autocomplete, Box, Button, CircularProgress, Container, CssBaseline, Grid, IconButton, Snackbar, TextField, Toolbar, Typography } from "@mui/material"
+import { useEffect, useRef, useState } from "react"
 import stops from "./assets/stops.json"
 import { StopsList } from "./StopsList";
 
@@ -14,6 +14,7 @@ function App() {
   const [stopsError, setStopsError] = useState(null)
   const [stopNames, setStopNames] = useState([])
   const [filteredStops, setFilteredStops] = useState([])
+  const [loadingStops, setLoadingStops] = useState(false)
   const [location, setLocation] = useState(null)
   const [hasLoc, setHasLoc] = useState(false)
   const [locError, setLocError] = useState(null)
@@ -21,6 +22,8 @@ function App() {
   const [snackOpen, setSnackOpen] = useState(false)
   const latFrame = 0.002;
   const lonFrame = 0.004
+
+  const fieldRef = useRef()
 
   useEffect(() => {
     const processedStops = Object.entries(stops).map((s) => {
@@ -42,15 +45,19 @@ function App() {
 
   async function fetchStopData() {
     if (stop) {
+      setLoadingStops(true)
+      fieldRef.current.getElementsByTagName('input')[0].blur()
       try {
         const data = await fetch(`https://data.foli.fi/siri/sm/${stop.key}`);
         const newStops = await data.json();
         setBusesList(newStops.result)
         setFetchedStop(stop.label)
         setStopsError(null)
+        setLoadingStops(false)
       } catch (err) {
         setStopsError(err)
         setFetchedStop(null)
+        setLoadingStops(false)
       }
     }
   }
@@ -115,6 +122,7 @@ function App() {
           <Grid container >
             <Grid item xs>
               <Autocomplete
+                ref={fieldRef}
                 size="small"
                 options={filteredStops}
                 isOptionEqualToValue={(option, value) => option.label === value.label}
@@ -130,7 +138,7 @@ function App() {
                 sx={{ml: '1em', height: '100%'}}
                 onClick={handleFilterClick}
               >
-                { !hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon />}
+                { !hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon className="rotate"/>}
               </Button>
             </Grid>
               {
@@ -148,6 +156,19 @@ function App() {
         </Container>
       </AppBar>
       <Container>
+        <Box
+          height="100%"
+          width="100vw"
+          position="absolute"
+          backgroundColor="rgba(255,255,255, 0.5)"
+          display={loadingStops ? 'flex' : 'none'}
+          justifyContent="center"
+          alignItems="center"
+          top={0}
+          left={0}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
         <StopsList busesList={busesList}></StopsList>
       </Container>
       <Snackbar
@@ -158,7 +179,6 @@ function App() {
         <Alert severity="error" variant="filled" sx={{width: "100%"}}>
           {!hasLoc ? 'Sijaintipalvelut ei käytössä' : locError ? 'Sijantipalvelussa virhe' : 'Sijainti käytössä'}
         </Alert>
-
       </Snackbar>
     </>
   )
