@@ -1,4 +1,16 @@
-import { Alert, AppBar, Autocomplete, Box, Button, CircularProgress, Container, CssBaseline, Grid, IconButton, Snackbar, TextField, Toolbar, Typography } from "@mui/material"
+import {
+  Alert,
+  AppBar,
+  Autocomplete,
+  Button,
+  Container,
+  CssBaseline,
+  Grid,
+  Snackbar,
+  TextField,
+  Toolbar,
+  Typography
+} from "@mui/material"
 import { useEffect, useRef, useState } from "react"
 import stops from "./assets/stops.json"
 import { StopsList } from "./StopsList";
@@ -71,15 +83,15 @@ function App() {
         setLocError(null)
         setLocation(pos.coords)
       },
-      (err) => {
-        console.error('geoloc.error', err)
-        setLocation(null)
-        if (err.code === 1) {
-          setHasLoc(false)
-        } else {
-          setLocError(err)
-        }
-      })
+        (err) => {
+          console.error('geoloc.error', err)
+          setLocation(null)
+          if (err.code === 1) {
+            setHasLoc(false)
+          } else {
+            setLocError(err)
+          }
+        })
     } else {
       setLocation(null)
       setHasLoc(false)
@@ -98,8 +110,8 @@ function App() {
     if (location && locFilter) {
       const filteredStops = stopNames.filter((s) => {
         return (
-        (location.latitude - latFrame / 2) < s.stop_lat && s.stop_lat < (location.latitude + latFrame / 2) &&
-        (location.longitude - lonFrame / 2) < s.stop_lon && s.stop_lon < (location.longitude + lonFrame / 2)
+          (location.latitude - latFrame / 2) < s.stop_lat && s.stop_lat < (location.latitude + latFrame / 2) &&
+          (location.longitude - lonFrame / 2) < s.stop_lon && s.stop_lon < (location.longitude + lonFrame / 2)
         )
       })
       setFilteredStops(filteredStops)
@@ -126,6 +138,7 @@ function App() {
                 size="small"
                 options={filteredStops}
                 isOptionEqualToValue={(option, value) => option.label === value.label}
+                noOptionsText="Ei pysäkkejä lähistöllä"
                 onChange={(e, v) => setStop(v ? v : null)}
                 renderInput={(params) => <TextField {...params} sx={{ '.MuiInputBase-root': { backgroundColor: "#FFF" } }} placeholder="Pysäkki" />}
                 ListboxProps={{ style: { maxHeight: '85vh' } }}
@@ -135,19 +148,19 @@ function App() {
               <Button
                 variant={locFilter ? 'outlined' : 'text'}
                 color="inherit"
-                sx={{ml: '1em', height: '100%'}}
+                sx={{ ml: '1em', height: '100%' }}
                 onClick={handleFilterClick}
               >
-                { !hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon className="rotate"/>}
+                {!hasLoc || locError ? <GpsOffIcon /> : location ? <MyLocationIcon /> : <LocationSearchingIcon className="rotate" />}
               </Button>
             </Grid>
-              {
-                stopsError?.name !== undefined ? (
-                  <Grid item xs={12}>
-                    <Typography variant="body1">{`${stopsError.name}: ${stopsError.message}.`}</Typography>
-                  </Grid>
-                ) : null
-              }
+            {
+              stopsError?.name !== undefined ? (
+                <Grid item xs={12}>
+                  <Typography variant="body1">{`${stopsError.name}: ${stopsError.message}.`}</Typography>
+                </Grid>
+              ) : null
+            }
           </Grid>
 
         </Toolbar>
@@ -156,27 +169,14 @@ function App() {
         </Container>
       </AppBar>
       <Container>
-        <Box
-          height="100%"
-          width="100vw"
-          position="absolute"
-          backgroundColor="rgba(255,255,255, 0.5)"
-          display={loadingStops ? 'flex' : 'none'}
-          justifyContent="center"
-          alignItems="center"
-          top={0}
-          left={0}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-        <StopsList busesList={busesList}></StopsList>
+        <StopsList busesList={busesList} loadingStops={loadingStops}></StopsList>
       </Container>
       <Snackbar
         open={snackOpen}
         onClose={handleCloseSnack}
         autoHideDuration={3000}
       >
-        <Alert severity="error" variant="filled" sx={{width: "100%"}}>
+        <Alert severity="error" variant="filled" sx={{ width: "100%" }}>
           {!hasLoc ? 'Sijaintipalvelut ei käytössä' : locError ? 'Sijantipalvelussa virhe' : 'Sijainti käytössä'}
         </Alert>
       </Snackbar>
